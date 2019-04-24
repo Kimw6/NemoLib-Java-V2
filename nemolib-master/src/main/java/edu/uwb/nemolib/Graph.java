@@ -1,5 +1,8 @@
 package edu.uwb.nemolib;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.*;
 
@@ -11,6 +14,10 @@ public class Graph implements Serializable {
         
 //        private List<AdjacencyList> dir_adjacencyLists; // added for directed graph
         private boolean directed = false; // default is undirected. 
+        
+        // Added to save nametoindex map (if parsed)
+        
+        private Map nameToIndex = new HashMap<String, Integer>();
 
 	/**
 	 * Construct a graph object. Default is undirected graph. 
@@ -19,13 +26,50 @@ public class Graph implements Serializable {
 	    adjacencyLists = new ArrayList<>();
             directed=false; //default is false
             adjacencyLists.add(new AdjacencyList()); // add an empty list
+            
     }
     
     public Graph(boolean dir) {
 	    adjacencyLists = new ArrayList<>();
             directed=dir;
             adjacencyLists.add(new AdjacencyList());// add an empty list
-    }        
+            
+    } 
+    
+    public void setNameToIndexMap(Map nToIdx){
+        nameToIndex=nToIdx;
+    }
+    
+    public Map getNameToIndexMap(){
+        return nameToIndex;
+    }
+    
+     public void write_nametoIndex(String filename) {
+         
+         HashMap<String, Integer> nToI= new HashMap<String, Integer>(nameToIndex);
+                       
+
+        // Now write to a separate file to save network motifs
+        try {
+                    // Create read and write filebuffer
+            BufferedWriter WriteFileBuffer
+                    = new BufferedWriter(new FileWriter(filename));
+          
+            for(String vertex: nToI.keySet()){
+               WriteFileBuffer.write(vertex+"\t"+nToI.get(vertex));
+               WriteFileBuffer.write("\n");                     
+                }               
+
+            
+           
+            WriteFileBuffer.close();           
+
+        } catch (IOException Ex) {
+            System.out.println(Ex.getMessage());
+        }
+
+        return;
+    }
 
 	/**
 	 * Add a vertex to this Graph.

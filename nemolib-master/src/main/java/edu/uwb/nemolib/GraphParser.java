@@ -1,7 +1,9 @@
 package edu.uwb.nemolib;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 
@@ -16,6 +18,7 @@ public class GraphParser {
 
 	// prevent instantiation of default constructor
 	private GraphParser() {throw new AssertionError();}
+        
 
 	/**
 	 * Parses a text file into a Graph object.
@@ -58,6 +61,12 @@ public class GraphParser {
                                 else output.getAdjacencyList(toIndex).add(fromIndex);
  			}
 		}
+               
+                output.setNameToIndexMap(nameToIndex);
+
 		return output;
 	}
+        
+       
+        
 }
