@@ -45,8 +45,36 @@ public class NemoCollectionBuilder {
         
         String sourcefilename = sp.getFilename();
         File source = new File(sourcefilename);
-        File dest = new File(can_filename);
+        File dest = new File(can_filename);       
+
+ 
+        try {
+            copyFileUsingChannel(source, dest);
+            
+            Map<String, String> g6_toCan = sp.getg6CanLabelMap();
+            
+
+            for (String g6label : g6_toCan.keySet()) {
+                String canLabel = g6_toCan.get(g6label);
+                Path path = Paths.get(can_filename);
+                Stream<String> lines = Files.lines(path);
+                List<String> replaced = lines.map(line -> line.replace("g6:" + g6label + ":", canLabel)).collect(Collectors.toList());
+                Files.write(path, replaced);
+                lines.close();
+
+            }
+        } catch (IOException Ex) {
+            System.out.println(Ex.getMessage());
+        }
+
+    }
+    
+    public static void buildSubgraphCollection(SubgraphCollection sp, String can_filename, Map nametoIndex) {
+        System.out.println("Replacing g6 label to canonical label for each subgraph");
         
+        String sourcefilename = sp.getFilename();
+        File source = new File(sourcefilename);
+        File dest = new File(can_filename);       
 
  
         try {
@@ -70,7 +98,7 @@ public class NemoCollectionBuilder {
 
     }
 
-    private static Map<String, Set<String>> getCantoG6Map(SubgraphCollection sp) {
+    /*private static Map<String, Set<String>> getCantoG6Map(SubgraphCollection sp) {
         Map<String, Set<String>> result = new HashMap<String, Set<String>>();
         Map<String, String> g6tocan = sp.getg6CanLabelMap();
 
@@ -87,6 +115,7 @@ public class NemoCollectionBuilder {
 
         return result;
     }
+*/
 
     public static void buildwithPvalue(SubgraphCollection sp,
             RelativeFrequencyAnalyzer sa,
@@ -139,6 +168,84 @@ public class NemoCollectionBuilder {
 
         return;
     }
+    
+     public static void buildwithPvalue(SubgraphCollection sp,
+            RelativeFrequencyAnalyzer sa,
+            double pThresh, String writefilename,
+            Map nametoIndex) {
+         
+         // If the map is not given, write with indices
+         if (nametoIndex==null) {
+                buildwithPvalue(sp, sa, pThresh, writefilename);
+                return;
+            }
+        
+        // If subgraphcollection needs to be obtained, 
+        Map<String, Double> pValues = sa.getPValues();
+
+        // Collect the canonical label of network motifs
+        Set<String> nm_can_g6 = new HashSet<String>();
+
+        for (Map.Entry<String, Double> labelPValue : pValues.entrySet()) {
+            if (labelPValue.getValue() <= pThresh) {
+                //System.out.println(labelPValue.getKey());
+                String nm_label = labelPValue.getKey();
+                nm_can_g6.add(nm_label);
+            }
+        }
+        
+        
+        
+        // Swap the key and value of nametoIndex
+            HashMap<Integer, String> indextoname = new HashMap<Integer, String>();
+            for (Object key:nametoIndex.keySet()){
+                Object index=nametoIndex.get(key);
+                indextoname.put((Integer)index, (String) key);
+            }   
+            
+
+        // Now write to a separate file to save network motifs
+        try {
+            Map<String, String> g6tocan = sp.getg6CanLabelMap();
+
+            // Create read and write filebuffer
+            BufferedWriter WriteFileBuffer
+                    = new BufferedWriter(new FileWriter(writefilename));
+
+            BufferedReader reader = new BufferedReader(new FileReader(sp.getFilename()));
+            String currentLine = null;            
+           
+            while ((currentLine=reader.readLine())!=null) {
+                String [] arrOfStr=currentLine.split(":");
+                String g6 = arrOfStr[1];
+                String nextline = reader.readLine().replaceAll("\\[|\\]", "");
+                String [] vertices = nextline.split("\\,|WWs");
+                String vertexline="[";
+                for (int i=0;i<vertices.length-1;i++){
+                     Integer idx = Integer.parseInt(vertices[i]);                    
+                    vertexline=vertexline+indextoname.get(idx)+",";
+                }
+                Integer idx = Integer.parseInt(vertices[vertices.length-1]);
+                vertexline=vertexline+indextoname.get(idx)+"]";              
+                if(nm_can_g6.contains(g6tocan.get(g6))){
+                      WriteFileBuffer.write(g6tocan.get(g6));
+                     WriteFileBuffer.write("\n");
+                     WriteFileBuffer.write(vertexline);
+                     WriteFileBuffer.write("\n");
+                }               
+
+            }
+            reader.close();
+            WriteFileBuffer.close();           
+
+        } catch (IOException Ex) {
+            System.out.println(Ex.getMessage());
+        }
+
+        return;
+    }
+        
+
 
     public static void buildwithZScore(SubgraphCollection sp,
             RelativeFrequencyAnalyzer sa,
@@ -187,6 +294,77 @@ public class NemoCollectionBuilder {
         } catch (IOException Ex) {
             System.out.println(Ex.getMessage());
         }
+        return;
+    }
+    
+    public static void buildwithZScore(SubgraphCollection sp,
+            RelativeFrequencyAnalyzer sa,
+            double zThresh, String writefilename,
+            Map nametoIndex) {
+
+          // If the map is not given, write with indices
+         if (nametoIndex==null) {
+                buildwithZScore(sp, sa, zThresh, writefilename);
+                return;
+            }
+        Map<String, Double> zScores = sa.getZScores();
+
+        // Collect the canonical label of network motifs
+        Set<String> nm_can_g6 = new HashSet<String>();
+
+        for (Map.Entry<String, Double> labelZValue : zScores.entrySet()) {
+            if (labelZValue.getValue() >= zThresh) {
+                //System.out.println(labelPValue.getKey());
+                String nm_label = labelZValue.getKey();
+                nm_can_g6.add(nm_label);
+            }
+        }
+        
+          // Swap the key and value of nametoIndex
+            HashMap<Integer, String> indextoname = new HashMap<Integer, String>();
+            for (Object key:nametoIndex.keySet()){
+                Object index=nametoIndex.get(key);
+                indextoname.put((Integer)index, (String) key);
+            }   
+            
+
+         try {
+            Map<String, String> g6tocan = sp.getg6CanLabelMap();
+
+            // Create read and write filebuffer
+            BufferedWriter WriteFileBuffer
+                    = new BufferedWriter(new FileWriter(writefilename));
+
+            BufferedReader reader = new BufferedReader(new FileReader(sp.getFilename()));
+            String currentLine = null;            
+           
+            while ((currentLine=reader.readLine())!=null) {
+                String [] arrOfStr=currentLine.split(":");
+                String g6 = arrOfStr[1];
+                String nextline = reader.readLine().replaceAll("\\[|\\]", "");
+                String [] vertices = nextline.split("\\,|WWs");
+                String vertexline="[";
+                for (int i=0;i<vertices.length-1;i++){
+                     Integer idx = Integer.parseInt(vertices[i]);                    
+                    vertexline=vertexline+indextoname.get(idx)+",";
+                }
+                Integer idx = Integer.parseInt(vertices[vertices.length-1]);
+                vertexline=vertexline+indextoname.get(idx)+"]";              
+                if(nm_can_g6.contains(g6tocan.get(g6))){
+                      WriteFileBuffer.write(g6tocan.get(g6));
+                     WriteFileBuffer.write("\n");
+                     WriteFileBuffer.write(vertexline);
+                     WriteFileBuffer.write("\n");
+                }               
+
+            }
+            reader.close();
+            WriteFileBuffer.close();           
+
+        } catch (IOException Ex) {
+            System.out.println(Ex.getMessage());
+        }
+
         return;
     }
 
