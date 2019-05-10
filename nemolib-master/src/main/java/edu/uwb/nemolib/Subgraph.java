@@ -182,7 +182,7 @@ public class Subgraph {
     public String toString() {
         String s = "[";
         for (int i = 0; i < size()-1; i++) {
-            s = s + get(i) + ", ";
+            s = s + get(i) + ",";
         }
         
         s = s + get(size()-1)+ "]";
