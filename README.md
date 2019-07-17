@@ -21,7 +21,7 @@ which implement nemolib should use the statement `import edu.uwb.nemolib;`.
 
 git clone https://github.com/Kimw6/NemoLib-Java-V2/
 
-cd nemolib
+cd NemoLib-Java-V2/nemolib-master
 
 mvn package
 
