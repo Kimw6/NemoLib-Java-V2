@@ -42,7 +42,7 @@ http://preshing.com/20141108/how-to-install-the-latest-gcc-on-windows/
 Example Program (testing the library)
 ---------------
 An example program can be found at 
-https://github.com/Kimw6/NemoLib-V2--Testing/
+https://github.com/Kimw6/NemoLib-Java-V2-Testing
 
 The example java main file can be also found at 
 /src/main/java/edu/uwb/nemolib_examples/network_motif_detector/
